@@ -1,0 +1,92 @@
+.model small
+.stack 100h
+.data  
+
+
+dim equ 5
+vett dw ?, ?, ?, ?, ?
+
+msg1 dw "Inserisci il numero da cercare$"
+msg2 dw "  $"
+msg3 dw "Numero non trovato nell'array$"
+msg4 dw "Numero di volte trovato$"
+msg5 dw "Inserisci numero$"
+a_capo dw 10, 13, "$"
+cerca dw ?  
+tot db ?
+
+output macro msg ;macro per output messaggi
+    mov dx, offset msg ; spostamento dell'offset della stringa in dx
+    mov ah, 9 ; impostazione di ah su 9 per la chiamata a INT 21h/9h
+    int 21h ;stampa stringa   
+    
+endm   
+
+
+input macro var ;macro per input dati
+    mov ah, 1h
+    int 21h ; impostazione di ah su 1h per la chiamata a INT 21h/1h
+    mov ah, 0
+    sub ax, 30h;sottrazzione per val decimale
+    mov var, ax
+endm 
+
+.code
+.startup 
+
+ 
+mov cx, dim
+inp:
+    output msg5       
+    input cerca 
+    mov ax, cerca
+    mov vett[di], ax ;di equivale alla dimens dell'array data da una var nel data seg, e inserita nel registro di
+    add di, 2;l'indice salt DI 2 byte per compensare la parte alta/ del registro 
+    output a_capo    
+loop inp
+
+
+output msg1
+input cerca
+output a_capo
+mov ax, 0       ;pulizia dei registri utilizzati
+mov cx, dim
+mov di, 0 
+mov bx, 0
+mov bx, cerca 
+mov tot, 0
+
+trova:        ;label trova con al suo interno ciclo per muoversi nell'array
+    mov ax, vett[di];di equivale alla dimens dell'array data da una var nel data seg, e inserita nel registro di
+    cmp ax, bx;confronto la pos dell'array col num inserito
+    je trovato  ;se sono ugali jmp alla label per incrementare il conto
+    add di, 2;l'indice salt DI 2 byte per compensare la parte alta/ del registro     
+loop trova 
+
+
+cmp tot, 0 
+je assente
+jne fine
+
+trovato:
+    add tot, 1
+    add di, 2
+    loop trova   
+    
+assente:
+    output msg3 
+    jmp end   
+
+fine:         
+    output msg4
+    output msg2
+    add tot, 30h 
+    mov dl, tot
+    mov ah , 2
+    int 21h    
+    ;output tot
+    
+end:
+.exit
+ret
+
